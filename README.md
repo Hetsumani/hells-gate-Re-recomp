@@ -39,16 +39,24 @@ Transparency and integrity are important to this project. Artificial Intelligenc
 ### Human Oversight:
 While AI accelerated the auxiliary workflow, all core architectural decisions, advanced problem-solving, code implementation, and final reviews were entirely human-driven. The AI served to eliminate friction, allowing focus on high-level logic and feature development.
 
-## Linux build (Ubuntu)
+## Linux build
 
-The project can also be built natively on Linux using Vulkan.
+The project can be built natively on Linux using Vulkan on distributions like Ubuntu and **Nobara / Fedora**.
 
-The commands below use **Clang 22** and the same ReXGlue workflow used by the
-Windows build, with the additional Linux GPU plugin and generated-code patch
-step.
+The commands below use **Clang 22** and the ReXGlue workflow, with the additional Linux GPU plugin and generated-code patch step.
+
+> [!TIP]
+> **Running Nobara Linux?** See the dedicated [Nobara Build Guide](file:///run/media/hetsumani/428E6B928E6B7CF3/GameDev/hells-gate-recomp/docs/NOBARA_BUILD.md) or use `./scripts/install_dantes_nobara.sh` and `./setup.sh` directly.
 
 ### 1. Install the required Linux dependencies
 
+**On Nobara / Fedora:**
+```bash
+chmod +x ./scripts/install_dantes_nobara.sh
+./scripts/install_dantes_nobara.sh
+```
+
+**On Ubuntu:**
 Make manifest backup and make the provided dependency installer executable and run it:
 
 ```bash
@@ -57,12 +65,16 @@ chmod +x ./scripts/install_dantes_min.sh
 ./scripts/install_dantes_min.sh
 ```
 
-This installs the compiler/toolchain and the development libraries needed by
-ReXGlue on Ubuntu.
-
 ### 2. Set up the SDK
 
-Run the existing project setup script with PowerShell:
+You can use the native Linux script (recommended, does not require PowerShell):
+
+```bash
+chmod +x ./setup.sh
+./setup.sh
+```
+
+Or run the PowerShell setup script:
 
 ```bash
 pwsh ./setup.ps1
