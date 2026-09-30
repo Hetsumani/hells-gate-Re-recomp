@@ -3,9 +3,12 @@
 #if defined(_WIN32)
 #include <windows.h>
 #define VK_USE_PLATFORM_WIN32_KHR
+#else
+#define VK_USE_PLATFORM_XLIB_KHR
+#define VK_USE_PLATFORM_WAYLAND_KHR
+#endif
 #define VK_NO_PROTOTYPES
 #include "volk.h"
-#endif
 
 #include "Graphics/GraphicsEngineVulkan/interface/EngineFactoryVk.h"
 #include "Graphics/GraphicsEngineVulkan/interface/RenderDeviceVk.h"
@@ -231,7 +234,12 @@ bool NativeDevice::initialize(void* hwnd, uint32_t width, uint32_t height) {
   sc_desc.DefaultDepthValue = 1.0f;
   sc_desc.IsPrimary = true;
 
+#if defined(_WIN32)
   Diligent::NativeWindow native_window(hwnd);
+#else
+  Diligent::NativeWindow native_window;
+  native_window.WindowId = static_cast<Diligent::Uint32>(reinterpret_cast<uintptr_t>(hwnd));
+#endif
 
   impl_->factory->CreateSwapChainVk(impl_->device, impl_->context, sc_desc,
                                     native_window, &impl_->swapchain);

@@ -3543,7 +3543,7 @@ index 1254710..3308c40 100644
                texture_format == rex::graphics::xenos::TextureFormat::k_2_10_10_10_AS_16_16_16_16);
    assert_true(color_space == 0);  // RGB(0)
 diff --git a/src/system/function_dispatcher.cpp b/src/system/function_dispatcher.cpp
-index bd43109..7b2e466 100644
+index bd43109..575b95f 100644
 --- a/src/system/function_dispatcher.cpp
 +++ b/src/system/function_dispatcher.cpp
 @@ -35,8 +35,10 @@ FunctionDispatcher* GetBoundFunctionDispatcher() {
@@ -3559,6 +3559,15 @@ index bd43109..7b2e466 100644
  }
  
  PPCFunc* ResolveIndirectFunction(uint32_t guest_address) {
+@@ -254,7 +256,7 @@ bool FunctionDispatcher::SetFunction(uint32_t guest_address, ::PPCFunc* func) {
+   assert_true(!module_tables_.empty());
+ 
+   if (!FindModuleByAddress(guest_address)) {
+-    REXLOG_ERROR("SetFunction: address {:08X} outside all registered module ranges", guest_address);
++    REXLOG_WARN("SetFunction: address {:08X} outside all registered module ranges", guest_address);
+     return false;
+   }
+ 
 diff --git a/src/system/mmio_handler.cpp b/src/system/mmio_handler.cpp
 index 2b93005..870398a 100644
 --- a/src/system/mmio_handler.cpp
@@ -3745,6 +3754,21 @@ index 2b93005..870398a 100644
      }
      return false;
    }
+diff --git a/src/system/runtime.cpp b/src/system/runtime.cpp
+index c10694c..dcf3a9c 100644
+--- a/src/system/runtime.cpp
++++ b/src/system/runtime.cpp
+@@ -236,9 +236,7 @@ X_STATUS Runtime::Setup(const rex::PPCImageInfo& image_info, RuntimeConfig confi
+     REXSYS_DEBUG("Registered {} recompiled functions ({} duplicates, {} rejected)", count,
+                  duplicates, rejected);
+     if (rejected > 0) {
+-      REXSYS_ERROR("PPCImageInfo registration: {} func_mappings entries rejected", rejected);
+-      Shutdown();
+-      return X_STATUS_UNSUCCESSFUL;
++      REXSYS_WARN("PPCImageInfo registration: {} func_mappings entries rejected (out of module range)", rejected);
+     }
+   }
+ 
 diff --git a/src/system/xmemory.cpp b/src/system/xmemory.cpp
 index 76cc877..b0c4004 100644
 --- a/src/system/xmemory.cpp
@@ -4181,6 +4205,23 @@ index 7360ed9..383b1ba 100644
    uint32_t last_acquired_and_ready =
        guest_output_mailbox_acquired_and_ready_.load(std::memory_order_relaxed);
    // Desired acquired = current acquired (changed only by the consumers).
+diff --git a/src/ui/rex_app.cpp b/src/ui/rex_app.cpp
+index b94fe9e..2fdc423 100644
+--- a/src/ui/rex_app.cpp
++++ b/src/ui/rex_app.cpp
+@@ -237,6 +237,12 @@ bool ReXApp::ConstructRuntime(const PathConfig& paths) {
+   auto status = runtime_->Setup(ppc_info_, std::move(config_));
+   if (XFAILED(status)) {
+     REXLOG_ERROR("Runtime setup failed: {:08X}", status);
++    if (immediate_drawer_) {
++      immediate_drawer_->SetPresenter(nullptr);
++    }
++    if (window_) {
++      window_->SetPresenter(nullptr);
++    }
+     return false;
+   }
+ 
 diff --git a/src/ui/vulkan/vulkan_presenter.cpp b/src/ui/vulkan/vulkan_presenter.cpp
 index 23645ef..110e310 100644
 --- a/src/ui/vulkan/vulkan_presenter.cpp
@@ -4229,9 +4270,3 @@ index 23645ef..110e310 100644
      // Limiting the frame rate, but lets too long frames cause tearing not to
      // make the latency even worse.
      swapchain_create_info.presentMode = VK_PRESENT_MODE_FIFO_RELAXED_KHR;
-diff --git a/thirdparty/libmspack b/thirdparty/libmspack
---- a/thirdparty/libmspack
-+++ b/thirdparty/libmspack
-@@ -1 +1 @@
--Subproject commit 305907723a4e7ab2018e58040059ffb5e77db837
-+Subproject commit 305907723a4e7ab2018e58040059ffb5e77db837-dirty

@@ -91,8 +91,9 @@ fi
 if [[ -f "${ROOT_DIR}/game/default.xex" ]]; then
   echo "==> Found game/default.xex! Proceeding with recompilation..."
 
-  # Backup manifest
+  # Backup manifest and CMakeLists.txt (rexglue init --force overwrites both)
   cp dantes_inferno_manifest.toml dantes_inferno_manifest.toml.back
+  cp CMakeLists.txt CMakeLists.txt.back
 
   echo "==> Regenerating SDK-managed project files..."
   "${ROOT_DIR}/thirdparty/rexglue-sdk/out/linux-amd64/rexglue" init \
@@ -102,8 +103,9 @@ if [[ -f "${ROOT_DIR}/game/default.xex" ]]; then
     --xex-path game/default.xex \
     --game-root game
 
-  echo "==> Restoring manifest customizations..."
+  echo "==> Restoring manifest and project customizations..."
   cp dantes_inferno_manifest.toml.back dantes_inferno_manifest.toml
+  cp CMakeLists.txt.back CMakeLists.txt
 
   echo "==> Generating recompiled C++ sources..."
   cmake -B "$BUILD_DIR" \
@@ -119,11 +121,21 @@ if [[ -f "${ROOT_DIR}/game/default.xex" ]]; then
   echo "==> Applying generated code patches..."
   python3 patches/generated/apply_generated_patches.py
 
-  echo "==> Compiling Dante's Inferno Linux binary..."
+  echo "==> Reconfiguring build system with generated sources..."
   cp dantes_inferno_manifest.toml.back dantes_inferno_manifest.toml
+  cp CMakeLists.txt.back CMakeLists.txt
+  cmake -B "$BUILD_DIR" \
+    -G Ninja \
+    -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
+    -DCMAKE_C_COMPILER="$CC" \
+    -DCMAKE_CXX_COMPILER="$CXX" \
+    -DCMAKE_CXX_FLAGS="-stdlib=libstdc++ -I${ROOT_DIR}/thirdparty/rexglue-sdk/thirdparty/imgui -mssse3 -mavx2" \
+    -DREXSDK_DIR="${ROOT_DIR}/thirdparty/rexglue-sdk"
+
+  echo "==> Compiling Dante's Inferno Linux binary..."
   cmake --build "$BUILD_DIR" --target dantes_inferno
 
-  rm -f dantes_inferno_manifest.toml.back
+  rm -f dantes_inferno_manifest.toml.back CMakeLists.txt.back
 
   echo ""
   echo "========================================================"

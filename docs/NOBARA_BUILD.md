@@ -105,8 +105,9 @@ cp thirdparty/rexglue-sdk/out/linux-amd64/lib*.so ./out/build/linux-release/
 
 ### Step 4: Recompile Dante's Inferno (requires `game/default.xex`)
 ```bash
-# 1. Backup manifest customizations
+# 1. Backup manifest and CMakeLists.txt customizations (rexglue init overwrites both)
 cp dantes_inferno_manifest.toml dantes_inferno_manifest.toml.back
+cp CMakeLists.txt CMakeLists.txt.back
 
 # 2. Regenerate SDK project files
 thirdparty/rexglue-sdk/out/linux-amd64/rexglue init \
@@ -116,8 +117,9 @@ thirdparty/rexglue-sdk/out/linux-amd64/rexglue init \
   --xex-path game/default.xex \
   --game-root game
 
-# 3. Restore manifest
+# 3. Restore manifest and project customizations
 cp dantes_inferno_manifest.toml.back dantes_inferno_manifest.toml
+cp CMakeLists.txt.back CMakeLists.txt
 
 # 4. Generate C++ sources
 cmake -B out/build/linux-release \
@@ -133,8 +135,17 @@ cmake --build out/build/linux-release --target dantes_inferno_codegen
 # 5. Apply generated-code patches
 python3 patches/generated/apply_generated_patches.py
 
-# 6. Build the final game binary
+# 6. Reconfigure CMake with generated sources and build the final game binary
 cp dantes_inferno_manifest.toml.back dantes_inferno_manifest.toml
+cp CMakeLists.txt.back CMakeLists.txt
+cmake -B out/build/linux-release \
+  -G Ninja \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_C_COMPILER=/usr/bin/clang-22 \
+  -DCMAKE_CXX_COMPILER=/usr/bin/clang++-22 \
+  -DCMAKE_CXX_FLAGS="-stdlib=libstdc++ -I$(pwd)/thirdparty/rexglue-sdk/thirdparty/imgui -mssse3 -mavx2" \
+  -DREXSDK_DIR=thirdparty/rexglue-sdk
+
 cmake --build out/build/linux-release --target dantes_inferno
-rm -f dantes_inferno_manifest.toml.back
+rm -f dantes_inferno_manifest.toml.back CMakeLists.txt.back
 ```
